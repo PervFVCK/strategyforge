@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
 interface User {
   id: string
@@ -7,6 +7,8 @@ interface User {
   name: string
   avatar?: string
   isPro: boolean
+  isVerified: boolean
+  lastLoginAt?: string
   createdAt: string
 }
 
@@ -69,12 +71,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'strategyforge-auth',
-      partialize: (state) => ({
-        user: state.user,
-        token: state.token,
-        refreshToken: state.refreshToken,
-        isAuthenticated: state.isAuthenticated,
-      }),
+      storage: createJSONStorage(() => localStorage),
     }
   )
 )

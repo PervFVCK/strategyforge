@@ -102,13 +102,18 @@ export const handleApiError = (error: unknown): string => {
 
 // API Methods
 export const authApi = {
+  register: async (email: string, password: string, name: string) => {
+    const response = await api.post('/auth/register', { email, password, name })
+    return response.data
+  },
+
   login: async (email: string, password: string) => {
     const response = await api.post('/auth/login', { email, password })
     return response.data
   },
 
-  register: async (email: string, password: string, name: string) => {
-    const response = await api.post('/auth/register', { email, password, name })
+  sendMagicLink: async (email: string) => {
+    const response = await api.post('/auth/magic-link', { email })
     return response.data
   },
 
@@ -129,6 +134,11 @@ export const authApi = {
 
   logout: async () => {
     await api.post('/auth/logout')
+  },
+
+  refreshToken: async (refreshToken: string) => {
+    const response = await api.post('/auth/refresh', { refreshToken })
+    return response.data
   },
 }
 
