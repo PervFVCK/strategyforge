@@ -4,9 +4,17 @@ import (
 	"fmt"
 	"math"
 	"time"
-
-	"github.com/PervFVCK/strategyforge/internal/models"
 )
+
+// CandleData represents a single OHLC candle
+type CandleData struct {
+	Timestamp time.Time `json:"timestamp"`
+	Open      float64   `json:"open"`
+	High      float64   `json:"high"`
+	Low       float64   `json:"low"`
+	Close     float64   `json:"close"`
+	Volume    int64     `json:"volume"`
+}
 
 // Strategy types
 type StrategyType string
@@ -38,10 +46,10 @@ type Trade struct {
 // BacktestRequest represents a backtest request
 type BacktestRequest struct {
 	Strategy      StrategyType       `json:"strategy"`
-	Parameters    map[string]float64     `json:"parameters"`
-	InitialBalance float64               `json:"initialBalance"`
-	RiskPerTrade   float64               `json:"riskPerTrade"`
-	Data           []models.CandleData   `json:"data"`
+	Parameters    map[string]float64 `json:"parameters"`
+	InitialBalance float64           `json:"initialBalance"`
+	RiskPerTrade   float64           `json:"riskPerTrade"`
+	Data           []CandleData      `json:"data"`
 }
 
 // BacktestResult represents the complete backtest results
@@ -183,7 +191,7 @@ func (e *BacktestEngine) RunBacktest(req BacktestRequest) (*BacktestResult, erro
 }
 
 // SMA Crossover Strategy
-func (e *BacktestEngine) runSMAStrategy(data []models.CandleData, params map[string]float64, balance, riskPct float64) []Trade {
+func (e *BacktestEngine) runSMAStrategy(data []CandleData, params map[string]float64, balance, riskPct float64) []Trade {
 	fastPeriod := int(params["fastPeriod"])
 	slowPeriod := int(params["slowPeriod"])
 	
@@ -245,7 +253,7 @@ func (e *BacktestEngine) runSMAStrategy(data []models.CandleData, params map[str
 }
 
 // EMA Crossover Strategy
-func (e *BacktestEngine) runEMAStrategy(data []models.CandleData, params map[string]float64, balance, riskPct float64) []Trade {
+func (e *BacktestEngine) runEMAStrategy(data []CandleData, params map[string]float64, balance, riskPct float64) []Trade {
 	// Similar to SMA but with EMA calculation
 	// Simplified for now
 	return e.runSMAStrategy(data, params, balance, riskPct)

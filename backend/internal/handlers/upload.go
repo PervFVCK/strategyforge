@@ -10,28 +10,38 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/PervFVCK/strategyforge/internal/middleware"
-	"github.com/PervFVCK/strategyforge/internal/models"
 )
 
 // UploadedFileInfo represents metadata about uploaded file
 type UploadedFileInfo struct {
-	ID             string    `json:"id"`
-	FileName       string    `json:"fileName"`
-	FileSize       int64     `json:"fileSize"`
-	FileType       string    `json:"fileType"`
-	Pair           string    `json:"pair"`
-	Timeframe      string    `json:"timeframe"`
-	RecordCount    int       `json:"recordCount"`
-	StartDate      time.Time `json:"startDate"`
-	EndDate        time.Time `json:"endDate"`
-	UploadedAt     time.Time `json:"uploadedAt"`
-	ProcessingTime string    `json:"processingTime"`
+	ID           string    `json:"id"`
+	FileName     string    `json:"fileName"`
+	FileSize     int64     `json:"fileSize"`
+	FileType     string    `json:"fileType"`
+	Pair         string    `json:"pair"`
+	Timeframe    string    `json:"timeframe"`
+	RecordCount  int       `json:"recordCount"`
+	StartDate    time.Time `json:"startDate"`
+	EndDate      time.Time `json:"endDate"`
+	UploadedAt   time.Time `json:"uploadedAt"`
+	ProcessingTime string  `json:"processingTime"`
+}
+
+// CandleData represents a single OHLC candle
+type CandleData struct {
+	Timestamp time.Time `json:"timestamp"`
+	Open      float64   `json:"open"`
+	High      float64   `json:"high"`
+	Low       float64   `json:"low"`
+	Close     float64   `json:"close"`
+	Volume    int64     `json:"volume"`
 }
 
 // HandleFileUpload processes uploaded trading data files
 func HandleFileUpload(c *fiber.Ctx) error {
 	startTime := time.Now()
 	
+	// Get user ID from context
 	userID := middleware.GetUserIDFromContext(c)
 	if userID == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -40,6 +50,7 @@ func HandleFileUpload(c *fiber.Ctx) error {
 		})
 	}
 
+	// Parse multipart form (max 100MB)
 	file, err := c.FormFile("file")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -48,7 +59,8 @@ func HandleFileUpload(c *fiber.Ctx) error {
 		})
 	}
 
-	maxSize := int64(100 * 1024 * 1024)
+	// Validate file size (max 100MB)
+	maxSize := int64(100 * 1024 * 1024) // 100MB
 	if file.Size > maxSize {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   "File Too Large",
@@ -56,8 +68,10 @@ func HandleFileUpload(c *fiber.Ctx) error {
 		})
 	}
 
+	// Get file extension
 	ext := strings.ToLower(filepath.Ext(file.Filename))
 	
+	// Validate file type
 	allowedTypes := map[string]bool{
 		".csv": true,
 		".hst": true,
@@ -72,6 +86,7 @@ func HandleFileUpload(c *fiber.Ctx) error {
 		})
 	}
 
+	// Open uploaded file
 	fileReader, err := file.Open()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -81,8 +96,9 @@ func HandleFileUpload(c *fiber.Ctx) error {
 	}
 	defer fileReader.Close()
 
+	// Parse file based on type
 	var fileInfo *UploadedFileInfo
-	var candles []models.CandleData
+	var candles []CandleData
 
 	switch ext {
 	case ".csv", ".txt":
@@ -111,9 +127,11 @@ func HandleFileUpload(c *fiber.Ctx) error {
 		})
 	}
 
+	// Calculate processing time
 	processingTime := time.Since(startTime)
 	fileInfo.ProcessingTime = processingTime.String()
 
+	// Return file info and sample data (first 100 candles)
 	sampleSize := 100
 	if len(candles) < sampleSize {
 		sampleSize = len(candles)
@@ -130,10 +148,12 @@ func HandleFileUpload(c *fiber.Ctx) error {
 	})
 }
 
-func parseCSVFile(reader io.Reader, filename string, fileSize int64) (*UploadedFileInfo, []models.CandleData, error) {
+// parseCSVFile parses CSV format trading data
+func parseCSVFile(reader io.Reader, filename string, fileSize int64) (*UploadedFileInfo, []CandleData, error) {
 	csvReader := csv.NewReader(reader)
 	csvReader.TrimLeadingSpace = true
 	
+	// Read all records
 	records, err := csvReader.ReadAll()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read CSV: %w", err)
@@ -143,6 +163,7 @@ func parseCSVFile(reader io.Reader, filename string, fileSize int64) (*UploadedF
 		return nil, nil, fmt.Errorf("CSV file is empty or has no data rows")
 	}
 
+	// Try to detect format and parse
 	candles, err := parseCSVRecords(records)
 	if err != nil {
 		return nil, nil, err
@@ -152,9 +173,13 @@ func parseCSVFile(reader io.Reader, filename string, fileSize int64) (*UploadedF
 		return nil, nil, fmt.Errorf("no valid candles found in file")
 	}
 
+	// Auto-detect pair from filename
 	pair := detectPairFromFilename(filename)
+	
+	// Auto-detect timeframe
 	timeframe := detectTimeframe(candles)
 
+	// Create file info
 	fileInfo := &UploadedFileInfo{
 		ID:          generateFileID(),
 		FileName:    filename,
@@ -171,24 +196,30 @@ func parseCSVFile(reader io.Reader, filename string, fileSize int64) (*UploadedF
 	return fileInfo, candles, nil
 }
 
-func parseCSVRecords(records [][]string) ([]models.CandleData, error) {
+// parseCSVRecords converts CSV records to candle data
+func parseCSVRecords(records [][]string) ([]CandleData, error) {
+	// Skip header row
 	dataRows := records[1:]
-	candles := make([]models.CandleData, 0, len(dataRows))
+	
+	candles := make([]CandleData, 0, len(dataRows))
 	
 	for i, row := range dataRows {
 		if len(row) < 6 {
-			continue
+			continue // Skip invalid rows
 		}
 
+		// Try to parse timestamp (handle multiple formats)
 		timestamp, err := parseTimestamp(row[0])
 		if err != nil {
 			return nil, fmt.Errorf("invalid timestamp at row %d: %w", i+2, err)
 		}
 
-		candle := models.CandleData{
+		// Parse OHLCV data
+		candle := CandleData{
 			Timestamp: timestamp,
 		}
 
+		// Parse prices
 		fmt.Sscanf(row[1], "%f", &candle.Open)
 		fmt.Sscanf(row[2], "%f", &candle.High)
 		fmt.Sscanf(row[3], "%f", &candle.Low)
@@ -201,7 +232,9 @@ func parseCSVRecords(records [][]string) ([]models.CandleData, error) {
 	return candles, nil
 }
 
+// parseTimestamp handles multiple timestamp formats
 func parseTimestamp(timeStr string) (time.Time, error) {
+	// Common formats
 	formats := []string{
 		"2006-01-02 15:04:05",
 		"2006-01-02 15:04",
@@ -221,10 +254,13 @@ func parseTimestamp(timeStr string) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("unsupported timestamp format: %s", timeStr)
 }
 
+// detectPairFromFilename extracts currency pair from filename
 func detectPairFromFilename(filename string) string {
 	pairs := []string{
 		"EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "USDCAD", "NZDUSD",
 		"EURJPY", "GBPJPY", "EURGBP", "AUDJPY", "EURAUD", "EURCHF", "AUDNZD",
+		"NZDJPY", "GBPAUD", "GBPCAD", "EURNZD", "AUDCAD", "GBPCHF", "AUDCHF",
+		"EURCAD", "CADJPY", "GBPNZD", "CADCHF", "CHFJPY", "NZDCAD", "NZDCHF",
 	}
 
 	upper := strings.ToUpper(filename)
@@ -237,11 +273,13 @@ func detectPairFromFilename(filename string) string {
 	return "UNKNOWN"
 }
 
-func detectTimeframe(candles []models.CandleData) string {
+// detectTimeframe analyzes candle intervals to detect timeframe
+func detectTimeframe(candles []CandleData) string {
 	if len(candles) < 2 {
 		return "UNKNOWN"
 	}
 
+	// Calculate average interval between candles
 	totalInterval := int64(0)
 	count := 0
 	
@@ -259,6 +297,7 @@ func detectTimeframe(candles []models.CandleData) string {
 
 	avgMinutes := totalInterval / int64(count)
 
+	// Map to timeframe
 	switch {
 	case avgMinutes <= 1:
 		return "M1"
@@ -281,6 +320,7 @@ func detectTimeframe(candles []models.CandleData) string {
 	}
 }
 
+// generateFileID creates a unique file ID
 func generateFileID() string {
 	return fmt.Sprintf("file_%d", time.Now().UnixNano())
 }
