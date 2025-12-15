@@ -19,7 +19,7 @@ export default function DashboardPage() {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -50,7 +50,7 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Banner */}
         <div className="card-premium rounded-2xl p-8 mb-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary-500/20 to-transparent rounded-full blur-3xl" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl" />
           <div className="relative">
             <h2 className="text-3xl font-bold text-foreground mb-2">
               Welcome back, {user?.name?.split(' ')[0]}! 👋
@@ -59,10 +59,10 @@ export default function DashboardPage() {
               Ready to backtest your next winning strategy?
             </p>
             {!user?.isPro && (
-              <div className="inline-flex items-center gap-2 bg-primary-900/30 border border-primary-800/50 rounded-lg px-4 py-2 text-sm">
-                <span className="text-primary-300">Free Plan</span>
+              <div className="inline-flex items-center gap-2 bg-primary/20 border border-primary/30 rounded-lg px-4 py-2 text-sm">
+                <span className="text-primary">Free Plan</span>
                 <span className="text-muted-foreground">•</span>
-                <button className="text-primary-400 hover:text-primary-300 font-medium">
+                <button className="text-primary hover:text-primary/80 font-medium">
                   Upgrade to Pro →
                 </button>
               </div>
@@ -76,21 +76,22 @@ export default function DashboardPage() {
             icon={<Upload className="w-6 h-6" />}
             title="Upload Data"
             description="Import your trading data"
-            onClick={() => alert('Coming in Phase 2!')}
+            onClick={() => navigate('/upload')}
             badge="Phase 2"
+            featured
           />
           <ActionCard
             icon={<Play className="w-6 h-6" />}
             title="Run Backtest"
             description="Test your strategy"
-            onClick={() => alert('Coming in Phase 3!')}
+            onClick={() => navigate('/backtest')}
             badge="Phase 3"
           />
           <ActionCard
             icon={<BarChart3 className="w-6 h-6" />}
             title="View Results"
             description="Analyze performance"
-            onClick={() => alert('Coming in Phase 4!')}
+            onClick={() => navigate('/result')}
             badge="Phase 4"
           />
           <ActionCard
@@ -101,50 +102,27 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Phase 1 Complete Banner */}
-        <div className="card-premium rounded-2xl p-6 bg-gradient-to-br from-primary-900/20 to-card border-primary-800/30">
+        {/* Phase Progress */}
+        <div className="card-premium rounded-2xl p-6 bg-gradient-to-br from-primary/10 to-card border-primary/20">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-primary-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-              <span className="text-2xl">🎉</span>
+            <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span className="text-2xl">🚀</span>
             </div>
             <div className="flex-1">
               <h3 className="text-xl font-bold text-foreground mb-2">
-                Phase 1 Complete! 🚀
+                Phase 2 in Progress! 🔥
               </h3>
               <p className="text-muted-foreground mb-4">
-                Authentication system is live. You're now logged in with bank-level security
-                (Argon2id password hashing, JWT tokens, rate limiting).
+                You can now upload and parse trading data files. Click "Upload Data" above to get started!
               </p>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-2 h-2 bg-primary-500 rounded-full" />
-                  <span className="text-foreground">User registration & login ✅</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-2 h-2 bg-primary-500 rounded-full" />
-                  <span className="text-foreground">JWT authentication ✅</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-2 h-2 bg-primary-500 rounded-full" />
-                  <span className="text-foreground">Protected routes ✅</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-2 h-2 bg-primary-500 rounded-full" />
-                  <span className="text-foreground">Beautiful UI ✅</span>
-                </div>
+                <PhaseStep completed text="User authentication system" />
+                <PhaseStep completed text="Beautiful dashboard UI" />
+                <PhaseStep active text="File upload & parsing (You are here!)" />
+                <PhaseStep text="Backtesting engine" />
+                <PhaseStep text="Strategy builder" />
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Next Steps */}
-        <div className="mt-8 p-6 border border-border rounded-xl bg-card/50">
-          <h3 className="text-lg font-bold text-foreground mb-4">🎯 Next: Phase 2 - Data Upload</h3>
-          <div className="space-y-3">
-            <NextStep number="1" text="Drag-and-drop CSV/HST file upload" />
-            <NextStep number="2" text="Parse 20+ years of tick data in <3s (Go backend)" />
-            <NextStep number="3" text="Store in IndexedDB for offline access" />
-            <NextStep number="4" text="Auto-detect timezone, spread, currency pair" />
           </div>
         </div>
       </div>
@@ -159,24 +137,36 @@ function ActionCard({
   description,
   onClick,
   badge,
+  featured,
 }: {
   icon: React.ReactNode
   title: string
   description: string
   onClick: () => void
   badge?: string
+  featured?: boolean
 }) {
   return (
     <button
       onClick={onClick}
-      className="card-premium rounded-xl p-6 text-left hover:border-primary-700/50 transition-all duration-200 hover:scale-105 active:scale-95 group relative overflow-hidden"
+      className={`card-premium rounded-xl p-6 text-left transition-all duration-200 hover:scale-105 active:scale-95 group relative overflow-hidden ${
+        featured ? 'border-primary/50' : ''
+      }`}
     >
       {badge && (
-        <span className="absolute top-3 right-3 text-xs bg-primary-900/50 text-primary-300 px-2 py-1 rounded-full border border-primary-800/50">
+        <span className={`absolute top-3 right-3 text-xs px-2 py-1 rounded-full border ${
+          featured 
+            ? 'bg-primary/20 text-primary border-primary/30' 
+            : 'bg-muted text-muted-foreground border-border'
+        }`}>
           {badge}
         </span>
       )}
-      <div className="w-12 h-12 bg-primary-900/50 rounded-xl flex items-center justify-center mb-4 text-primary-400 group-hover:bg-primary-900/70 transition-colors">
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors ${
+        featured 
+          ? 'bg-primary/20 text-primary group-hover:bg-primary/30' 
+          : 'bg-muted text-muted-foreground group-hover:bg-muted/70'
+      }`}>
         {icon}
       </div>
       <h3 className="font-bold text-foreground mb-1">{title}</h3>
@@ -185,14 +175,23 @@ function ActionCard({
   )
 }
 
-// Next Step Component
-function NextStep({ number, text }: { number: string; text: string }) {
+// Phase Step Component
+function PhaseStep({ completed, active, text }: { completed?: boolean; active?: boolean; text: string }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="w-8 h-8 bg-primary-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
-        <span className="text-sm font-bold text-primary-400">{number}</span>
+      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+        completed 
+          ? 'bg-primary text-white' 
+          : active 
+          ? 'bg-primary/30 border-2 border-primary' 
+          : 'bg-muted border-2 border-border'
+      }`}>
+        {completed && <span className="text-sm">✓</span>}
+        {active && <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />}
       </div>
-      <span className="text-sm text-muted-foreground">{text}</span>
+      <span className={`text-sm ${completed || active ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+        {text}
+      </span>
     </div>
   )
 }

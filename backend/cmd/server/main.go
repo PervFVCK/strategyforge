@@ -46,9 +46,10 @@ func main() {
 		ReadTimeout:           10 * time.Second,
 		WriteTimeout:          10 * time.Second,
 		IdleTimeout:           120 * time.Second,
+		BodyLimit:             100 * 1024 * 1024, // 100MB for file uploads
 	})
 
-	// Security Middleware - Using only fields that exist in helmet
+	// Security Middleware
 	app.Use(helmet.New(helmet.Config{
 		XSSProtection:             "1; mode=block",
 		ContentTypeNosniff:        "nosniff",
@@ -130,13 +131,11 @@ func main() {
 	protected.Get("/me", handlers.HandleGetCurrentUser)
 	protected.Post("/logout", handlers.HandleLogout)
 
-	// Future protected routes
-	protected.Post("/upload", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{"message": "Upload endpoint - Coming in Phase 2"})
-	})
-	protected.Post("/backtest", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{"message": "Backtest endpoint - Coming in Phase 3"})
-	})
+	// Phase 2: File Upload (NOW ACTIVE!)
+	protected.Post("/upload", handlers.HandleFileUpload)
+
+	protected.Post("/backtest", handlers.HandleBacktest)
+
 	protected.Get("/strategies", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"message": "Strategies endpoint - Coming in Phase 6"})
 	})
