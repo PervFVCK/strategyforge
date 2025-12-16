@@ -116,7 +116,7 @@ export default function BacktestPage() {
         parameters,
         initialBalance,
         riskPerTrade,
-        data: file.sampleData || file.fullData || []
+        data: file.fullData || file.sampleData || []
       })
 
       if (response.data.success) {

@@ -17,7 +17,7 @@ export default function VerifyPage() {
     
     if (!token) {
       setStatus('error')
-      setMessage('Invalid verification link')
+      setMessage('Invalid verification link - no token provided')
       return
     }
 
@@ -26,21 +26,38 @@ export default function VerifyPage() {
 
   const verifyToken = async (token: string) => {
     try {
+      console.log('🔍 Verifying magic link token:', token)
+      
       const response = await authApi.verifyMagicLink(token)
       
-      login(
-        response.data.user,
-        response.data.token,
-        response.data.refreshToken
-      )
+      console.log('✅ Magic link verified:', response)
+
+      // Check if response has the correct structure
+      if (!response.success || !response.data) {
+        throw new Error('Invalid response from server')
+      }
+
+      const { user, token: jwtToken, refreshToken } = response.data
+
+      console.log('👤 User data:', user)
+      console.log('🔑 JWT Token:', jwtToken ? 'Present' : 'Missing')
+      console.log('🔄 Refresh Token:', refreshToken ? 'Present' : 'Missing')
+
+      // Store auth data
+      login(user, jwtToken, refreshToken)
+      
+      console.log('💾 Auth data stored in Zustand')
       
       setStatus('success')
       setMessage('Login successful! Redirecting...')
       
+      // Redirect after 1 second
       setTimeout(() => {
-        navigate('/dashboard')
-      }, 2000)
+        console.log('🚀 Redirecting to dashboard...')
+        navigate('/dashboard', { replace: true })
+      }, 1000)
     } catch (err) {
+      console.error('❌ Magic link verification failed:', err)
       setStatus('error')
       setMessage(handleApiError(err))
     }
@@ -51,7 +68,7 @@ export default function VerifyPage() {
       <div className="card-premium rounded-2xl p-8 max-w-md w-full text-center space-y-6">
         {status === 'loading' && (
           <>
-            <Loader2 className="w-16 h-16 text-primary-400 mx-auto animate-spin" />
+            <Loader2 className="w-16 h-16 text-primary mx-auto animate-spin" />
             <h2 className="text-2xl font-bold">Verifying...</h2>
             <p className="text-muted-foreground">Please wait while we verify your magic link</p>
           </>
@@ -59,8 +76,9 @@ export default function VerifyPage() {
 
         {status === 'success' && (
           <>
-            <CheckCircle className="w-16 h-16 text-primary-400 mx-auto" />
-            <h2 className="text-2xl font-bold text-primary-400">{message}</h2>
+            <CheckCircle className="w-16 h-16 text-primary mx-auto" />
+            <h2 className="text-2xl font-bold text-primary">{message}</h2>
+            <p className="text-muted-foreground">Taking you to your dashboard...</p>
           </>
         )}
 

@@ -138,14 +138,17 @@ func HandleFileUpload(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"success": true,
-		"message": "File uploaded and parsed successfully",
-		"data": fiber.Map{
-			"fileInfo": fileInfo,
-			"sample":   candles[:sampleSize],
-			"total":    len(candles),
-		},
-	})
+    "success": true,
+    "message": "File uploaded and parsed successfully",
+    "data": fiber.Map{
+        "fileInfo": fileInfo,
+	"sample":   candles[:sampleSize],
+        "fullData": candles,  // 🔥 ADD THIS - Send all candles!
+        "total":    len(candles),
+
+       },
+  })
+
 }
 
 // parseCSVFile parses CSV format trading data
