@@ -1,77 +1,64 @@
-import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
-
-interface User {
-  id: string
-  email: string
-  name: string
-  avatar?: string
-  isPro: boolean
-  isVerified: boolean
-  lastLoginAt?: string
-  createdAt: string
-}
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { User } from '../types';
 
 interface AuthState {
-  user: User | null
-  token: string | null
-  refreshToken: string | null
-  isAuthenticated: boolean
-  isLoading: boolean
-  error: string | null
-
+  user: User | null;
+  isAuthenticated: boolean;
+  tempPhone: string; // For OTP flow
+  tempUserId: number | null; // For PIN setup
+  
   // Actions
-  setUser: (user: User) => void
-  setTokens: (token: string, refreshToken: string) => void
-  login: (user: User, token: string, refreshToken: string) => void
-  logout: () => void
-  clearError: () => void
-  setLoading: (isLoading: boolean) => void
-  setError: (error: string) => void
+  setUser: (user: User) => void;
+  setTempPhone: (phone: string) => void;
+  setTempUserId: (id: number) => void;
+  logout: () => void;
+  clearTemp: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      token: null,
-      refreshToken: null,
       isAuthenticated: false,
-      isLoading: false,
-      error: null,
+      tempPhone: '',
+      tempUserId: null,
 
-      setUser: (user) => set({ user }),
-
-      setTokens: (token, refreshToken) =>
-        set({ token, refreshToken, isAuthenticated: true }),
-
-      login: (user, token, refreshToken) =>
+      setUser: (user) =>
         set({
           user,
-          token,
-          refreshToken,
           isAuthenticated: true,
-          error: null,
         }),
 
-      logout: () =>
+      setTempPhone: (phone) =>
+        set({ tempPhone: phone }),
+
+      setTempUserId: (id) =>
+        set({ tempUserId: id }),
+
+      logout: () => {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
         set({
           user: null,
-          token: null,
-          refreshToken: null,
           isAuthenticated: false,
-          error: null,
+          tempPhone: '',
+          tempUserId: null,
+        });
+      },
+
+      clearTemp: () =>
+        set({
+          tempPhone: '',
+          tempUserId: null,
         }),
-
-      clearError: () => set({ error: null }),
-
-      setLoading: (isLoading) => set({ isLoading }),
-
-      setError: (error) => set({ error, isLoading: false }),
     }),
     {
-      name: 'strategyforge-auth',
-      storage: createJSONStorage(() => localStorage),
+      name: 'auth-storage',
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
     }
   )
-)
+);

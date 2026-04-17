@@ -1,41 +1,19 @@
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Dependencies
-node_modules/
-vendor/
-
-# Build outputs
-dist/
-build/
+# Backend
+backend/payom.db
+backend/tmp/
 *.exe
-*.dll
-*.so
-*.dylib
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Logs
 *.log
-logs/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+
+# Secrets
+.env
+*.key
+*.pem
 
 # OS
 .DS_Store
 Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Go
-*.test
-*.out
-coverage.txt
